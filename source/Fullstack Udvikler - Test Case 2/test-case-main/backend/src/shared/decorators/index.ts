@@ -1,0 +1,1 @@
+export * from './collection-to-array.decorator';

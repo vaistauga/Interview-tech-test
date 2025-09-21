@@ -5,16 +5,16 @@ import { UsersController } from '../../src/users/users.controller';
 import { ImportUsersCommand } from '../../src/users/commands';
 import { UsersImportRequestDto } from '../../src/users/dto';
 
-    function createMockCsvBuffer(): Buffer {
-      return Buffer.from('firstName,lastName,email\nJohn,Doe,john@example.com\nJane,Smith,jane@example.com');
-    }
+function createMockCsvBuffer(): Buffer {
+  return Buffer.from('firstName,lastName,email\nJohn,Doe,john@example.com\nJane,Smith,jane@example.com');
+}
 
-    const mockFile = {
-      originalname: 'test-users.csv',
-      mimetype: 'text/csv',
-      size: 2048,
-      buffer: createMockCsvBuffer(),
-    } as Express.Multer.File;
+const mockFile = {
+  originalname: 'test-users.csv',
+  mimetype: 'text/csv',
+  size: 2048,
+  buffer: createMockCsvBuffer(),
+} as Express.Multer.File;
 
 describe('UsersController - Import', () => {
   let controller: UsersController;

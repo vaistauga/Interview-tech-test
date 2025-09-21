@@ -192,7 +192,7 @@ SWAGGER_ENABLED=true
 
 ```bash
 # API Configuration
-REACT_APP_API_URL=http://localhost:3000
+REACT_APP_API_URL=http://localhost:3001
 ```
 
 ## 🐳 Docker Deployment

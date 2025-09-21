@@ -13,7 +13,7 @@ import {
   UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiConsumes } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { User } from './entities/user.entity';
@@ -67,6 +67,14 @@ export class UsersController {
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({ summary: 'Import users from file (asynchronous)' })
   @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        accountId: { type: 'string', format: 'uuid' },
+        file: { type: 'string', format: 'binary' },
+    }
+  }})
   @ApiResponse({ status: 201, description: 'User import job started successfully', schema: {
     type: 'object',
     properties: {

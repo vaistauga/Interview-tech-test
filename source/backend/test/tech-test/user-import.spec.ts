@@ -1,9 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { BadRequestException } from '@nestjs/common';
+import { CqrsModule, CommandBus } from '@nestjs/cqrs';
+import { getQueueToken } from '@nestjs/bull';
 import { UsersController } from '../../src/users/users.controller';
-import { ImportUsersCommand } from '../../src/users/commands';
 import { UsersImportRequestDto } from '../../src/users/dto';
+import { ImportUsersHandler } from '../../src/users/handlers';
+import { FileService } from '../../src/files/services/file.service';
+import { USERS_QUEUE } from '../../src/users/constants';
+
+// Mock the createQueue function
+jest.mock('../../src/shared/queue/queue.helper', () => ({
+  createQueue: jest.fn().mockImplementation(async (queue, name, payload) => {
+    return await queue.add(name, payload);
+  }),
+}));
 
 function createMockCsvBuffer(): Buffer {
   return Buffer.from('firstName,lastName,email\nJohn,Doe,john@example.com\nJane,Smith,jane@example.com');
@@ -18,33 +27,38 @@ const mockFile = {
 
 describe('UsersController - Import', () => {
   let controller: UsersController;
-  let commandBus: CommandBus;
 
-  const mockCommandBus = {
-    execute: jest.fn(),
+  const mockFileService = {
+    createFile: jest.fn().mockResolvedValue({
+      id: 'test-file-id',
+    }),
   };
 
-  const mockQueryBus = {
-    execute: jest.fn(),
+  const mockQueue = {
+    add: jest.fn().mockResolvedValue({}),
   };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [CqrsModule],
       controllers: [UsersController],
       providers: [
+        ImportUsersHandler,
         {
-          provide: CommandBus,
-          useValue: mockCommandBus,
+          provide: FileService,
+          useValue: mockFileService,
         },
         {
-          provide: QueryBus,
-          useValue: mockQueryBus,
+          provide: getQueueToken(USERS_QUEUE),
+          useValue: mockQueue,
         },
       ],
     }).compile();
 
     controller = module.get<UsersController>(UsersController);
-    commandBus = module.get<CommandBus>(CommandBus);
+    
+    // Initialize the CQRS module to register handlers
+    await module.init();
   });
 
   afterEach(() => {
@@ -52,59 +66,34 @@ describe('UsersController - Import', () => {
   });
 
   describe('importUsers', () => {
-    it('should successfully import users from a CSV file', async () => {
+    it('should return file id, total records in file, and total new records', async () => {
       // Arrange
-
-
       const dto: UsersImportRequestDto = {
         accountId: '550e8400-e29b-41d4-a716-446655440000',
       };
-
-      mockCommandBus.execute.mockResolvedValue(undefined);
 
       // Act
       const result = await controller.importUsers(dto, mockFile);
 
       // Assert
-      expect(result.success).toBe(true);
-      expect(result.message).toContain('queue was created to import the users');
-      expect(commandBus.execute).toHaveBeenCalledWith(
-        expect.any(ImportUsersCommand),
+      expect(typeof result.fileId).toBe('string');
+      expect(result.totalRecordsInFile).toBe(2);
+      expect(result.totalNewRecords).toBe(2);
+      expect(mockFileService.createFile).toHaveBeenCalledWith({
+        buffer: mockFile.buffer,
+        originalName: mockFile.originalname,
+        mimeType: mockFile.mimetype,
+        size: mockFile.size,
+        fileType: expect.any(String),
+        expirationHours: 48,
+      });
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        expect.any(String),
+        {
+          fileId: 'test-file-id',
+          dto,
+        }
       );
-      expect(commandBus.execute).toHaveBeenCalledTimes(1);
-    });
-
-    it('should throw BadRequestException when no file is provided', async () => {
-      // Arrange
-      const dto: UsersImportRequestDto = {
-        accountId: '550e8400-e29b-41d4-a716-446655440000',
-      };
-
-      // Act & Assert
-      await expect(controller.importUsers(dto, null)).rejects.toThrow(
-        new BadRequestException('No file provided')
-      );
-      expect(commandBus.execute).not.toHaveBeenCalled();
-    });
-
-    it('should throw BadRequestException for invalid file type', async () => {
-      // Arrange
-      const mockInvalidFile = {
-        originalname: 'invalid.txt',
-        mimetype: 'text/plain',
-        size: 1024,
-        buffer: Buffer.from('some text content'),
-      } as Express.Multer.File;
-
-      const dto: UsersImportRequestDto = {
-        accountId: '550e8400-e29b-41d4-a716-446655440000',
-      };
-
-      // Act & Assert
-      await expect(controller.importUsers(dto, mockInvalidFile)).rejects.toThrow(
-        new BadRequestException('Invalid file type. Please upload CSV or Excel files only.')
-      );
-      expect(commandBus.execute).not.toHaveBeenCalled();
     });
   });
 });

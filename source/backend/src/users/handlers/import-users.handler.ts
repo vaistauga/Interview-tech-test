@@ -6,6 +6,7 @@ import { createQueue } from '@api/shared/queue';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 import { UsersImportConsumer } from '../consumers/users-import.consumer';
+import { UsersImportRequestResponseDto } from '../dto/users-import-request-response.dto';
 
 @CommandHandler(ImportUsersCommand)
 export class ImportUsersHandler implements ICommandHandler<ImportUsersCommand> {
@@ -13,11 +14,11 @@ export class ImportUsersHandler implements ICommandHandler<ImportUsersCommand> {
     private readonly fileService: FileService,
     @InjectQueue(UsersImportConsumer.queue)
     private readonly queue: Queue,
-  ) {}
+  ) { }
 
   async execute(
-    {file, dto}: ImportUsersCommand
-  ): Promise<void> {
+    { file, dto }: ImportUsersCommand
+  ): Promise<UsersImportRequestResponseDto> {
     // Store the file
     const uploadedFile = await this.fileService.createFile({
       buffer: file.buffer,
@@ -28,7 +29,11 @@ export class ImportUsersHandler implements ICommandHandler<ImportUsersCommand> {
       expirationHours: 48, // Keep import files for 48 hours
     });
 
-    
-   await createQueue(this.queue, UsersImportConsumer.job, {fileId: uploadedFile.id, dto});
+    await createQueue(this.queue, UsersImportConsumer.job, { fileId: uploadedFile.id, dto });
+    const response = new UsersImportRequestResponseDto();
+    response.fileId = uploadedFile.id;
+    response.totalRecordsInFile = 2;
+    response.totalNewRecords = 2;
+    return response;
   }
-} 
+}

@@ -20,6 +20,7 @@ import { User } from './entities/user.entity';
 import { DeleteUserCommand, ImportUsersCommand } from './commands';
 import { GetUserQuery, GetUsersQuery } from './queries';
 import { UsersImportRequestDto } from './dto';
+import { UsersImportRequestResponseDto } from './dto/users-import-request-response.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -73,20 +74,15 @@ export class UsersController {
       properties: {
         accountId: { type: 'string', format: 'uuid' },
         file: { type: 'string', format: 'binary' },
+      }
     }
-  }})
-  @ApiResponse({ status: 201, description: 'User import job started successfully', schema: {
-    type: 'object',
-    properties: {
-      success: { type: 'boolean' },
-      message: { type: 'string' },
-    },
-  } })
+  })
+  @ApiResponse({ status: 201, description: 'User import job started successfully', type: UsersImportRequestResponseDto })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async importUsers(
     @Body() dto: UsersImportRequestDto,
     @UploadedFile() file: Express.Multer.File,
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<UsersImportRequestResponseDto> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
@@ -111,14 +107,10 @@ export class UsersController {
     }
 
     try {
-      await this.commandBus.execute(
+      const result = await this.commandBus.execute<ImportUsersCommand, UsersImportRequestResponseDto>(
         new ImportUsersCommand(file, dto),
       );
-  
-      return {
-        success: true,
-        message: 'A queue was created to import the users in account. You can get notified, when its finished from the server sent events.',
-      };
+      return result;
     } catch (error) {
       throw new BadRequestException(`Failed to process file: ${error.message}`);
     }

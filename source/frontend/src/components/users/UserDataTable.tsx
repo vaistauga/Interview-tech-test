@@ -1,4 +1,5 @@
 import { useAccountContext } from '@/contexts/AccountContext';
+import { set } from 'lodash';
 import { FilterMatchMode } from 'primereact/api';
 import { Button } from 'primereact/button';
 import { Column } from 'primereact/column';
@@ -9,6 +10,7 @@ import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
 import { useDeleteUser, useImportUsers, useUsers } from '../../hooks';
 import { User } from '../../types/User';
+import ImportUsersModal from './ImportUsersModal';
 
 const TableContainer = styled.div`
   background: white;
@@ -175,6 +177,9 @@ export const UserDataTable: React.FC = () => {
       matchMode: FilterMatchMode.CONTAINS,
     },
   });
+  const [showUserImportModal, setShowUserImportModal] = useState(false);
+  const [newRecords, setNewRecords] = useState(0);
+  const [newUsers, setNewUsers] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toast = useRef<Toast>(null);
@@ -276,6 +281,9 @@ export const UserDataTable: React.FC = () => {
           detail: result.message,
           life: 5000,
         });
+        setShowUserImportModal(true);
+        setNewRecords(result.totalRecordsInFile);
+        setNewUsers(result.totalNewRecords);
       } else {
         toast.current?.show({
           severity: 'error',
@@ -406,6 +414,12 @@ export const UserDataTable: React.FC = () => {
 
   return (
     <TableContainer>
+      <ImportUsersModal
+        visible={showUserImportModal}
+        onClose={() => setShowUserImportModal(false)}
+        newRecords={newRecords}
+        newUsers={newUsers}
+      />
       <Toast ref={toast} />
       {header}
       <DataTableWrapper>

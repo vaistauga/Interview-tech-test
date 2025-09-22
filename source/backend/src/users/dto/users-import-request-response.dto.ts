@@ -14,4 +14,7 @@ export class UsersImportRequestResponseDto {
     @ApiProperty()
     @IsNumber()
     public totalNewRecords: number;
+
+    @ApiProperty()
+    public success: boolean;
 }

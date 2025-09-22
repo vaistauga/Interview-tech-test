@@ -34,6 +34,7 @@ export class ImportUsersHandler implements ICommandHandler<ImportUsersCommand> {
     response.fileId = uploadedFile.id;
     response.totalRecordsInFile = 2;
     response.totalNewRecords = 2;
+    response.success = true;
     return response;
   }
 }

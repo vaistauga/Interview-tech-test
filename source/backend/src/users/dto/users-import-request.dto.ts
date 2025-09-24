@@ -6,4 +6,7 @@ export class UsersImportRequestDto {
   @IsUUID()
   @IsNotEmpty()
   public accountId: string;
+  @ApiProperty()
+  @IsNotEmpty()
+  public fileId: string;
 }

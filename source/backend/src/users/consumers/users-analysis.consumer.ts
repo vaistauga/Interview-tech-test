@@ -12,6 +12,7 @@ import {  SEQUENCE_ERROR_KEY, SEQUENCE_TOTAL_NEW_USERS_COUNT, SEQUENCE_TOTAL_USE
 export class JobResult {
   totalUserRows: number;
   newUsers: number;
+  fileId: string;
 }
 
 
@@ -58,6 +59,7 @@ export class UsersAnalysisConsumer {
     const result = new JobResult();
     result.totalUserRows = totalUsersCount;
     result.newUsers = newUsersCount;
+    result.fileId = job.data.fileId;
     return result;
   }
 

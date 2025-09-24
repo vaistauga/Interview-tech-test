@@ -12,14 +12,18 @@ import {
   ParseUUIDPipe,
   UploadedFile,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 import { User } from './entities/user.entity';
 import { DeleteUserCommand, ImportUsersCommand, AnalyzeUsersCommand } from './commands';
 import { GetUserQuery, GetUsersQuery } from './queries';
-import { UsersImportRequestDto } from './dto';
+import { UsersImportRequestDto, JobStatusResponseDto } from './dto';
+import { UsersAnalysisConsumer } from './consumers/users-analysis.consumer';
 
 @ApiTags('users')
 @Controller('users')
@@ -28,6 +32,8 @@ export class UsersController {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
+    @InjectQueue(UsersAnalysisConsumer.queue)
+    private readonly analysisQueue: Queue,
   ) {}
 
   @Get()
@@ -136,7 +142,7 @@ export class UsersController {
         file: { type: 'string', format: 'binary' },
     }
   }})
-  @ApiResponse({ status: 201, description: 'User file import job started successfully', schema: {
+  @ApiResponse({ status: 201, description: 'User file imported successfully', schema: {
     type: 'object',
     properties: {
       jobId: { type: 'string' },
@@ -150,5 +156,58 @@ export class UsersController {
     const jobId = await this.commandBus.execute(new AnalyzeUsersCommand(file, dto));
     return { jobId: jobId.toString() };
   }
+
+  @Get('analysis/:jobId/status')
+  @ApiOperation({ summary: 'Get status and result of user analysis job' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Job status retrieved successfully', 
+    type: JobStatusResponseDto 
+  })
+  @ApiResponse({ status: 404, description: 'Job not found' })
+  async getAnalysisJobStatus(@Param('jobId') jobId: string): Promise<JobStatusResponseDto> {
+    const job = await this.analysisQueue.getJob(jobId);
+    
+    if (!job) {
+      throw new NotFoundException(`Job with ID ${jobId} not found`);
+    }
+
+    const response = new JobStatusResponseDto();
+    response.jobId = job.id.toString();
+    response.createdAt = new Date(job.timestamp);
+    response.progress = job.progress();
+
+    // Determine job status
+    const isCompleted = await job.isCompleted();
+    const isFailed = await job.isFailed();
+    const isActive = await job.isActive();
+    const isWaiting = await job.isWaiting();
+    const isDelayed = await job.isDelayed();
+    const isStuck = await job.isStuck();
+
+    if (isCompleted) {
+      response.status = 'completed';
+      response.result = job.returnvalue;
+      response.finishedAt = job.finishedOn ? new Date(job.finishedOn) : undefined;
+    } else if (isFailed) {
+      response.status = 'failed';
+      response.error = job.failedReason;
+      response.finishedAt = job.finishedOn ? new Date(job.finishedOn) : undefined;
+    } else if (isActive) {
+      response.status = 'active';
+    } else if (isDelayed) {
+      response.status = 'delayed';
+    } else if (isStuck) {
+      response.status = 'stalled';
+    } else if (isWaiting) {
+      response.status = 'waiting';
+    } else {
+      response.status = 'unknown';
+    }
+
+    return response;
+  }
+
+
 
 } 

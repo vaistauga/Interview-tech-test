@@ -9,7 +9,7 @@ import { createQueueLogger, QueueLogger } from '@api/shared/queue';
 import { UsersImportRequestDto } from '@api/users/dto';
 import {  SEQUENCE_ERROR_KEY, SEQUENCE_TOTAL_NEW_USERS_COUNT, SEQUENCE_TOTAL_USERS_COUNT } from '@api/shared/sequence/constants';
 
-class jobResult{
+export class JobResult {
   totalUserRows: number;
   newUsers: number;
 }
@@ -44,7 +44,7 @@ export class UsersAnalysisConsumer {
       fileId: string;
       dto: UsersImportRequestDto;
     }>,
-  ): Promise<jobResult> {
+  ): Promise<JobResult> {
     const queueLogger = createQueueLogger(this.logger, job);
 
     await queueLogger.log('Start importing.');
@@ -55,7 +55,7 @@ export class UsersAnalysisConsumer {
     );
 
     await queueLogger.log('Finished importing.');
-    const result = new jobResult();
+    const result = new JobResult();
     result.totalUserRows = totalUsersCount;
     result.newUsers = newUsersCount;
     return result;

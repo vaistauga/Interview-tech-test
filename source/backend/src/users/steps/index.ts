@@ -1,6 +1,7 @@
 export * from './abstract-process-user.step';
 export * from './account-process-user.step';
 export * from './chunk-users.step';
+export * from './count-existing-users.step';
 export * from './create-branches.step';
 export * from './create-groups.step';
 export * from './flush-and-re-fetch-user.step';

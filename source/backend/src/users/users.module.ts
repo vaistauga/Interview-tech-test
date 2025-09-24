@@ -6,6 +6,7 @@ import { User } from '@api/users/entities/user.entity';
 import {
   DeleteUserHandler,
   ImportUsersHandler,
+  AnalyzeUsersHandler,
   GetUserHandler,
   GetUsersHandler,
 } from './handlers';
@@ -13,16 +14,17 @@ import { FilesModule } from '@api/files/files.module';
 import { ImportUsersFileReaderFactory } from '@api/users/factories';
 import { ExcelParserService } from '@api/shared/services';
 import { CsvImportUsersFileReader, ExcelImportUsersFileReader } from './import-users-file-readers';
-import { onAccountImportSequenceProvider } from './steps/providers';
+import { onAccountImportSequenceProvider, onAccountValidationSequenceProvider } from './steps/providers';
 import { GroupModule } from '@api/group/group.module';
 import { BranchModule } from '@api/branch/branch.module';
 import { UsersImportConsumer } from './consumers/users-import.consumer';
+import { UsersFileImportConsumer } from './consumers/users-analysis.consumer';
 import { BullModule } from '@nestjs/bull';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullAdapter } from '@bull-board/api/bullAdapter';
-import { USERS_QUEUE } from './constants';
+import { USERS_QUEUE, USERS_ANALYSIS_QUEUE } from './constants';
 
-const commandHandlers = [DeleteUserHandler, ImportUsersHandler];
+const commandHandlers = [DeleteUserHandler, ImportUsersHandler, AnalyzeUsersHandler];
 const queryHandlers = [GetUserHandler, GetUsersHandler];
 const steps = [
   {
@@ -36,9 +38,10 @@ const steps = [
     },
   },
   onAccountImportSequenceProvider,
+  onAccountValidationSequenceProvider,
 ];
 const services = [ExcelParserService];
-const consumers = [UsersImportConsumer];
+const consumers = [UsersImportConsumer, UsersFileImportConsumer];
 
 @Module({
   imports: [
@@ -50,8 +53,15 @@ const consumers = [UsersImportConsumer];
     BullModule.registerQueue({
       name: USERS_QUEUE,
     }),
+    BullModule.registerQueue({
+      name: USERS_ANALYSIS_QUEUE,
+    }),
     BullBoardModule.forFeature({
       name: UsersImportConsumer.queue,
+      adapter: BullAdapter,
+    }),
+    BullBoardModule.forFeature({
+      name: USERS_ANALYSIS_QUEUE,
       adapter: BullAdapter,
     }),
   ],

@@ -1,5 +1,6 @@
 import {
   ON_ACCOUNT_IMPORT_USERS_SEQUENCE,
+  ON_ACCOUNT_IMPORT_USERS_VALIDATION_SEQUENCE,
 } from '../constants';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { EventBus } from '@nestjs/cqrs';
@@ -10,6 +11,7 @@ import { CreateBranchesStep } from '@api/users/steps/create-branches.step';
 import { CreateGroupsStep } from '@api/users/steps/create-groups.step';
 import { LoadAutoAssignGroupsStep } from '@api/users/steps/load-auto-assign-groups.step';
 import { ChunkUsersStep } from '@api/users/steps/chunk-users.step';
+import { CountExistingUsersStep } from '@api/users/steps/count-existing-users.step';
 import { AccountProcessUserStep } from '@api/users/steps/account-process-user.step';
 import { FlushAndReFetchUserStep } from '@api/users/steps/flush-and-re-fetch-user.step';
 import { TriggerUserSavedEventStep } from '@api/users/steps/trigger-user-saved-event.step';
@@ -39,6 +41,17 @@ export const onAccountImportSequenceProvider: Provider = {
         new AccountProcessUserStep(),
         new FlushAndReFetchUserStep(),
         new TriggerUserSavedEventStep(eventBus),
+      ]),
+};
+
+export const onAccountValidationSequenceProvider: Provider = {
+  provide: ON_ACCOUNT_IMPORT_USERS_VALIDATION_SEQUENCE,
+  inject: [ImportUsersFileReaderFactory, EntityManager],
+  useFactory: (importUsersFileReaderFactory: ImportUsersFileReaderFactory, em: EntityManager,) =>
+    () =>
+      new Sequence([
+        new ReadFileStep(em, importUsersFileReaderFactory),
+        new CountExistingUsersStep(em),
       ]),
 };
 

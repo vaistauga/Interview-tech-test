@@ -1,6 +1,7 @@
 // Command Handlers
 export * from './delete-user.handler';
 export * from './import-users.handler';
+export * from './analyze-users.handler';
 
 // Query Handlers
 export * from './get-user.handler';

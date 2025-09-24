@@ -8,6 +8,7 @@ export const SEQUENCE_GROUPS_KEY = Symbol('groups');
 export const SEQUENCE_PHISHING_GROUP_KEY = Symbol('phishingGroup');
 export const SEQUENCE_AUTO_ASSIGN_GROUPS_KEY = Symbol('autoAssignGroups');
 export const SEQUENCE_TOTAL_USERS_COUNT = Symbol('totalUsersCount');
+export const SEQUENCE_TOTAL_NEW_USERS_COUNT = Symbol('totalNewUsersCount');
 export const SEQUENCE_CLOUD_DIRECTORY_INTEGRATIONS_STATUS_KEY = Symbol(
   'cloudDirectoryIntegrationsStatus',
 );

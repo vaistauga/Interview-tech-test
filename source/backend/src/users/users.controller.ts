@@ -17,7 +17,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiConsumes, ApiBody } fr
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { User } from './entities/user.entity';
-import { DeleteUserCommand, ImportUsersCommand } from './commands';
+import { DeleteUserCommand, ImportUsersCommand, AnalyzeUsersCommand } from './commands';
 import { GetUserQuery, GetUsersQuery } from './queries';
 import { UsersImportRequestDto } from './dto';
 
@@ -123,4 +123,32 @@ export class UsersController {
       throw new BadRequestException(`Failed to process file: ${error.message}`);
     }
   }
+
+  @Post('import-file')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Import users from file (asynchronous)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        accountId: { type: 'string', format: 'uuid' },
+        file: { type: 'string', format: 'binary' },
+    }
+  }})
+  @ApiResponse({ status: 201, description: 'User file import job started successfully', schema: {
+    type: 'object',
+    properties: {
+      jobId: { type: 'string' },
+    },
+  } })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  async analyzeUsersFile(
+    @Body() dto: UsersImportRequestDto,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<{ jobId: string }> {
+    const jobId = await this.commandBus.execute(new AnalyzeUsersCommand(file, dto));
+    return { jobId: jobId.toString() };
+  }
+
 } 

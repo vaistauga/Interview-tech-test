@@ -1,8 +1,10 @@
 import { SystemRoles } from "./enums";
 
 export const ON_ACCOUNT_IMPORT_USERS_SEQUENCE = 'account.import.users';
+export const ON_ACCOUNT_IMPORT_USERS_VALIDATION_SEQUENCE = 'account.validation.users.validation';
 
 export const USERS_QUEUE = 'users';
+export const USERS_ANALYSIS_QUEUE = 'users-analysis-queue';
 
 export const ALLOWED_USERS_IMPORT_ROLES = [
     SystemRoles.ADMIN,

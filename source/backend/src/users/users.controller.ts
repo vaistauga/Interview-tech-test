@@ -130,7 +130,7 @@ export class UsersController {
     }
   }
 
-  @Post('import-file')
+  @Post('import-file-upload')
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({ summary: 'Import users from file (asynchronous)' })
   @ApiConsumes('multipart/form-data')
@@ -157,7 +157,7 @@ export class UsersController {
     return { jobId: jobId.toString() };
   }
 
-  @Get('analysis/:jobId/status')
+  @Get('import-file-upload/:jobId')
   @ApiOperation({ summary: 'Get status and result of user analysis job' })
   @ApiResponse({ 
     status: 200, 

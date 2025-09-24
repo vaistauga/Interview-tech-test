@@ -6,13 +6,13 @@ import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 import { UsersImportConsumer } from '../consumers/users-import.consumer';
 import { AnalyzeUsersCommand } from '../commands';
-import { UsersFileImportConsumer } from '../consumers/users-analysis.consumer';
+import { UsersAnalysisConsumer } from '../consumers/users-analysis.consumer';
 
 @CommandHandler(AnalyzeUsersCommand)
 export class AnalyzeUsersHandler implements ICommandHandler<AnalyzeUsersCommand> {
   constructor(
     private readonly fileService: FileService,
-    @InjectQueue(UsersImportConsumer.queue)
+    @InjectQueue(UsersAnalysisConsumer.queue)
     private readonly queue: Queue,
   ) {}
 
@@ -29,7 +29,7 @@ export class AnalyzeUsersHandler implements ICommandHandler<AnalyzeUsersCommand>
       expirationHours: 48, // Keep import files for 48 hours
     });
     
-   var job = await createQueue(this.queue, UsersFileImportConsumer.job, {fileId: uploadedFile.id, dto});
+   var job = await createQueue(this.queue, UsersAnalysisConsumer.job, {fileId: uploadedFile.id, dto});
    return job.id.valueOf();
   }
 } 

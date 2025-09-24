@@ -18,7 +18,7 @@ import { onAccountImportSequenceProvider, onAccountValidationSequenceProvider } 
 import { GroupModule } from '@api/group/group.module';
 import { BranchModule } from '@api/branch/branch.module';
 import { UsersImportConsumer } from './consumers/users-import.consumer';
-import { UsersFileImportConsumer } from './consumers/users-analysis.consumer';
+import { UsersAnalysisConsumer } from './consumers/users-analysis.consumer';
 import { BullModule } from '@nestjs/bull';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullAdapter } from '@bull-board/api/bullAdapter';
@@ -41,7 +41,7 @@ const steps = [
   onAccountValidationSequenceProvider,
 ];
 const services = [ExcelParserService];
-const consumers = [UsersImportConsumer, UsersFileImportConsumer];
+const consumers = [UsersImportConsumer, UsersAnalysisConsumer];
 
 @Module({
   imports: [
@@ -61,7 +61,7 @@ const consumers = [UsersImportConsumer, UsersFileImportConsumer];
       adapter: BullAdapter,
     }),
     BullBoardModule.forFeature({
-      name: USERS_ANALYSIS_QUEUE,
+      name: UsersAnalysisConsumer.queue,
       adapter: BullAdapter,
     }),
   ],

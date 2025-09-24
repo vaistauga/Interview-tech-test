@@ -1,15 +1,13 @@
 import { OnQueueFailed, Process, Processor } from '@nestjs/bull';
 import { Job } from 'bull';
-import { ON_ACCOUNT_IMPORT_USERS_SEQUENCE, ON_ACCOUNT_IMPORT_USERS_VALIDATION_SEQUENCE, USERS_ANALYSIS_QUEUE, USERS_IMPORT_ERRORS, USERS_QUEUE } from '@api/users/constants';
+import { ON_ACCOUNT_IMPORT_USERS_VALIDATION_SEQUENCE, USERS_ANALYSIS_QUEUE } from '@api/users/constants';
 import { CreateRequestContext, EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Logger } from '@nestjs/common';
 import { LOGGER } from '@api/shared/logger/constants';
 import { Context, Sequence } from '@api/shared/sequence';
 import { createQueueLogger, QueueLogger } from '@api/shared/queue';
 import { UsersImportRequestDto } from '@api/users/dto';
-import { TUserImportError } from '@api/users/types';
-import { Account } from '@api/accounts/entities/account.entity';
-import { SEQUENCE_ACCOUNT_ID_KEY, SEQUENCE_ENTITY_ID_KEY, SEQUENCE_ENTITY_TYPE_KEY, SEQUENCE_ERROR_KEY, SEQUENCE_TOTAL_NEW_USERS_COUNT, SEQUENCE_TOTAL_USERS_COUNT } from '@api/shared/sequence/constants';
+import {  SEQUENCE_ERROR_KEY, SEQUENCE_TOTAL_NEW_USERS_COUNT, SEQUENCE_TOTAL_USERS_COUNT } from '@api/shared/sequence/constants';
 
 class jobResult{
   totalUserRows: number;
@@ -17,11 +15,11 @@ class jobResult{
 }
 
 
-@Processor(UsersFileImportConsumer.queue)
-export class UsersFileImportConsumer {
+@Processor(UsersAnalysisConsumer.queue)
+export class UsersAnalysisConsumer {
   public static readonly queue = USERS_ANALYSIS_QUEUE;
   public static readonly job = 'users.file_import';
-  private readonly logger = new Logger(UsersFileImportConsumer.name);
+  private readonly logger = new Logger(UsersAnalysisConsumer.name);
 
   public constructor(
     private readonly em: EntityManager,
@@ -30,7 +28,7 @@ export class UsersFileImportConsumer {
   ) {}
 
   @OnQueueFailed({
-    name: UsersFileImportConsumer.job,
+    name: UsersAnalysisConsumer.job,
   })
   public async onError(job: Job, error: Error): Promise<void> {
     const logger = createQueueLogger(this.logger, job);
@@ -39,7 +37,7 @@ export class UsersFileImportConsumer {
   }
 
   @Process({
-    name: UsersFileImportConsumer.job,
+    name: UsersAnalysisConsumer.job,
   })
   public async handle(
     job: Job<{

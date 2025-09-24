@@ -1,6 +1,6 @@
 import { OnQueueFailed, Process, Processor } from '@nestjs/bull';
 import { Job } from 'bull';
-import { ON_ACCOUNT_IMPORT_USERS_SEQUENCE, USERS_IMPORT_ERRORS, USERS_QUEUE } from '@api/users/constants';
+import { ON_ACCOUNT_IMPORT_USERS_SEQUENCE, USERS_ANALYSIS_QUEUE, USERS_IMPORT_ERRORS, USERS_QUEUE } from '@api/users/constants';
 import { CreateRequestContext, EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Logger } from '@nestjs/common';
 import { LOGGER } from '@api/shared/logger/constants';

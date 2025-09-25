@@ -1,5 +1,4 @@
 import { useAccountContext } from '@/contexts/AccountContext';
-import { set } from 'lodash';
 import { FilterMatchMode } from 'primereact/api';
 import { Button } from 'primereact/button';
 import { Column } from 'primereact/column';
@@ -8,12 +7,7 @@ import { InputText } from 'primereact/inputtext';
 import { Toast } from 'primereact/toast';
 import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
-import {
-  useDeleteUser,
-  useImportUsers,
-  useImportUsersFile,
-  useUsers,
-} from '../../hooks';
+import { useDeleteUser, useImportUsersFile, useUsers } from '../../hooks';
 import { User } from '../../types/User';
 import ImportUsersModal from './ImportUsersModal';
 
@@ -183,8 +177,7 @@ export const UserDataTable: React.FC = () => {
     },
   });
   const [showUserImportModal, setShowUserImportModal] = useState(false);
-  const [newRecords, setNewRecords] = useState(0);
-  const [newUsers, setNewUsers] = useState(0);
+  const [jobId, setJobId] = useState<string | undefined>(undefined);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toast = useRef<Toast>(null);
@@ -199,7 +192,6 @@ export const UserDataTable: React.FC = () => {
   } = useUsers(selectedAccount?.id ?? '');
   const deleteUserMutation = useDeleteUser();
   const importUsersFileMutation = useImportUsersFile();
-  const importUsersMutation = useImportUsers();
 
   const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -283,13 +275,12 @@ export const UserDataTable: React.FC = () => {
       if (result.success) {
         toast.current?.show({
           severity: 'success',
-          summary: 'Import Successful',
+          summary: 'Import Started',
           detail: result.message,
           life: 5000,
         });
+        setJobId(result.jobId);
         setShowUserImportModal(true);
-        setNewRecords(result.totalRecordsInFile);
-        setNewUsers(result.totalNewRecords);
       } else {
         toast.current?.show({
           severity: 'error',
@@ -422,9 +413,11 @@ export const UserDataTable: React.FC = () => {
     <TableContainer>
       <ImportUsersModal
         visible={showUserImportModal}
-        onClose={() => setShowUserImportModal(false)}
-        newRecords={newRecords}
-        newUsers={newUsers}
+        onClose={() => {
+          setShowUserImportModal(false);
+          setJobId(undefined);
+        }}
+        jobId={jobId}
       />
       <Toast ref={toast} />
       {header}

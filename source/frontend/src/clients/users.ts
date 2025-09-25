@@ -105,7 +105,7 @@ export const usersClient = {
 
   getJobStatus: async (jobId: string): Promise<JobStatusResult> => {
     const response = await apiClient.get<JobStatusResult>(
-      `${API_CONFIG.ENDPOINTS.USERS_IMPORT_FILE_STATUS}/status/${jobId}`,
+      `${API_CONFIG.ENDPOINTS.USERS_IMPORT_FILE_STATUS}/${jobId}`,
     );
     return response.data;
   },

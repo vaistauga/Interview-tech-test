@@ -39,3 +39,19 @@ export const useImportUsers = () => {
     },
   });
 };
+
+export const useImportUsersFile = () => {
+  return useMutation({
+    mutationFn: ({ accountId, file }: { accountId: string; file: File }) =>
+      usersClient.importUsersFile(accountId, file),
+  });
+};
+
+export const useQueryJobStatus = (jobId: string) => {
+  return useQuery({
+    queryFn: () => usersClient.getJobStatus(jobId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+    enabled: Boolean(jobId),
+  });
+};

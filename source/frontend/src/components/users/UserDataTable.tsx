@@ -7,7 +7,12 @@ import { InputText } from 'primereact/inputtext';
 import { Toast } from 'primereact/toast';
 import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
-import { useDeleteUser, useImportUsers, useUsers } from '../../hooks';
+import {
+  useDeleteUser,
+  useImportUsers,
+  useImportUsersFile,
+  useUsers,
+} from '../../hooks';
 import { User } from '../../types/User';
 
 const TableContainer = styled.div`
@@ -188,6 +193,7 @@ export const UserDataTable: React.FC = () => {
     refetch,
   } = useUsers(selectedAccount?.id ?? '');
   const deleteUserMutation = useDeleteUser();
+  const importUsersFileMutation = useImportUsersFile();
   const importUsersMutation = useImportUsers();
 
   const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -264,7 +270,7 @@ export const UserDataTable: React.FC = () => {
     }
 
     try {
-      const result = await importUsersMutation.mutateAsync({
+      const result = await importUsersFileMutation.mutateAsync({
         accountId: selectedAccount?.id ?? '',
         file,
       });
@@ -326,9 +332,9 @@ export const UserDataTable: React.FC = () => {
             icon="pi pi-upload"
             label="Import"
             onClick={handleImportClick}
-            loading={importUsersMutation.isLoading}
+            loading={importUsersFileMutation.isLoading}
             className="p-button-outlined p-button-secondary"
-            disabled={importUsersMutation.isLoading}
+            disabled={importUsersFileMutation.isLoading}
             tooltip="Import users from CSV or Excel file"
             tooltipOptions={{ position: 'top' }}
           />

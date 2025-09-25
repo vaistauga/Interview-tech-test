@@ -418,6 +418,7 @@ export const UserDataTable: React.FC = () => {
           setJobId(undefined);
         }}
         jobId={jobId}
+        accountId={selectedAccount?.id ?? ''}
       />
       <Toast ref={toast} />
       {header}

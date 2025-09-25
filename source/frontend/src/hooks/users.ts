@@ -31,8 +31,13 @@ export const useImportUsers = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ accountId, file }: { accountId: string; file: File }) =>
-      usersClient.importUsers(accountId, file),
+    mutationFn: ({
+      accountId,
+      fileId,
+    }: {
+      accountId: string;
+      fileId: string;
+    }) => usersClient.importUsers(accountId, fileId),
     onSuccess: () => {
       // Invalidate users list to refetch data after import
       queryClient.invalidateQueries([USERS_QUERY_KEYS.lists()]);

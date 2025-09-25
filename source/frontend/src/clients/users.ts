@@ -54,25 +54,20 @@ export const usersClient = {
 
   importUsers: async (
     accountId: string,
-    file: File,
+    fileId: string,
   ): Promise<{
-    fileId: string;
-    totalRecordsInFile: number;
-    totalNewRecords: number;
     success: boolean;
     message: string;
   }> => {
     const formData = new FormData();
 
     formData.append('accountId', accountId);
-    formData.append('file', file);
+    formData.append('fileId', fileId);
 
     const response = await apiClient.post<{
       success: boolean;
       message: string;
       fileId: string;
-      totalRecordsInFile: number;
-      totalNewRecords: number;
     }>(API_CONFIG.ENDPOINTS.USERS_IMPORT, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',

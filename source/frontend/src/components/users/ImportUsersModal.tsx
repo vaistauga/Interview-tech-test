@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { usersClient } from '@/clients';
+import { useImportUsers } from '@/hooks/users';
 
 interface JobStatusResult {
   jobId: string;
@@ -19,14 +20,36 @@ interface JobStatusResult {
 interface Props {
   visible: boolean;
   jobId?: string;
+  accountId: string;
   onClose: () => void;
 }
 
-const ImportUsersModal: React.FC<Props> = ({ visible, jobId, onClose }) => {
+const ImportUsersModal: React.FC<Props> = ({
+  visible,
+  jobId,
+  accountId,
+  onClose,
+}) => {
   const [jobStatus, setJobStatus] = useState<JobStatusResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const currentJobIdRef = useRef<string | undefined>(undefined);
+  const importUsers = useImportUsers();
+
+  const handleImportUsers = async () => {
+    if (!jobStatus?.result?.fileId) return;
+
+    try {
+      await importUsers.mutateAsync({
+        accountId,
+        fileId: jobStatus.result.fileId,
+      });
+      onClose();
+    } catch (err) {
+      console.error('Failed to import users:', err);
+      setError('Failed to import users');
+    }
+  };
 
   const stopPolling = () => {
     if (intervalRef.current) {
@@ -159,6 +182,25 @@ const ImportUsersModal: React.FC<Props> = ({ visible, jobId, onClose }) => {
                 <div style={{ fontSize: '18px', color: '#4caf50' }}>
                   <strong>New Users:</strong> {jobStatus.result.newUsers}
                 </div>
+                <button
+                  onClick={handleImportUsers}
+                  disabled={importUsers.isLoading}
+                  style={{
+                    marginTop: '20px',
+                    padding: '12px 24px',
+                    backgroundColor: '#4caf50',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    cursor: importUsers.isLoading ? 'not-allowed' : 'pointer',
+                    opacity: importUsers.isLoading ? 0.6 : 1,
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  {importUsers.isLoading ? 'Importing...' : 'Import Users'}
+                </button>
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '20px' }}>
